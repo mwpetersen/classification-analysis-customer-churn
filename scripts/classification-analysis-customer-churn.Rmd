@@ -1,0 +1,106 @@
+---
+title: "A classification analysis of customer churn"
+subtitle: "Applied machine learning and big data, fall 2021"
+author: "Mikkel Wittenburg Petersen"
+date: "`r Sys.Date()`"
+toc-title: Contents
+output:
+  pagedown::html_paged:
+    toc: true
+    fig_caption: true
+    number_sections: true
+    css:
+      - "../styles/fonts.css"
+      - default
+      - "../styles/custom-style.css"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(reticulate)
+```
+
+```{python}
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn import metrics
+
+```
+
+# Introduction
+
+# Method
+
+# Analysis
+
+
+```{python}
+
+df_churn = pd.read_csv("../data/telecom-churn.csv")
+
+```
+
+```{python}
+# #split dataset in features and target variable
+
+X = df_churn.drop('Churn', axis=1)
+
+y = df_churn['Churn']
+
+```
+
+
+```{python}
+# split X and y into training and testing sets
+
+X_train,X_test,y_train,y_test = train_test_split(X, y, test_size = 0.25,random_state = 0, stratify = y)
+
+```
+
+```{python}
+
+# instantiate the model
+logreg = LogisticRegression(solver='lbfgs', max_iter=1000)
+
+# fit the model with data
+logreg.fit(X_train,y_train)
+
+```
+
+```{python}
+
+# Predict churn in the test set
+y_pred=logreg.predict(X_test)
+
+```
+
+Model performance
+```{python}
+
+# Accuracy
+churn_accuracy = metrics.accuracy_score(y_test, y_pred)
+
+churn_precision = metrics.precision_score(y_test, y_pred)
+
+churn_recall = metrics.recall_score(y_test, y_pred)
+
+```
+
+```{python}
+
+# Confusion matrix
+cnf_matrix = metrics.confusion_matrix(y_test, y_pred)
+cnf_matrix
+
+```
+
+ROC curve
+```{python}
+
+```
+
+
+# Literature
+
+
