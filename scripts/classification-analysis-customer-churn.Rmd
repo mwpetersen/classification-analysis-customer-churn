@@ -34,7 +34,9 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import roc_curve, auc
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
 from sklearn import svm
+from sklearn.model_selection import GridSearchCV
 import numpy as np
 
 ```
@@ -75,48 +77,44 @@ x_train,x_test,y_train,y_test = train_test_split(x, y, test_size = 0.33,random_s
 
 
 ```{python}
-# Standardize the predictor variables
-scaler = StandardScaler()
+# Standardize the predictor variables that aren't binary
 
-x_train = scaler.fit_transform(x_train)
+preproc = ColumnTransformer(
+    transformers=[
+        ('scale', StandardScaler(), 
+        ["AccountWeeks", "DataUsage", "CustServCalls", "DayMins", "DayCalls", "MonthlyCharge", "OverageFee", "RoamMins"]),
+    ],
+    remainder="passthrough",
+)
 
-x_test = scaler.fit_transform(x_test)
+x_train = preproc.fit_transform(x_train)
+
+x_test = preproc.fit_transform(x_test)
 
 ```
 
 ## Logistic regression
 
-```{python, include=FALSE}
+```{python, include=FALSE, warning=FALSE}
+
+# Create the hyperparameter grid
+c_space = [0.01, 0.1, 1, 10]
+
+param_grid = {'C': c_space, 'penalty': ['l1', 'l2'], 'solver' : ['newton-cg', 'lbfgs', 'liblinear']}
 
 # instantiate the model
-logreg_model = LogisticRegression(solver='lbfgs', max_iter=1000)
+logreg_model = LogisticRegression()
+
+# Instantiate the GridSearchCV object: logreg_cv
+logreg_cv = GridSearchCV(logreg_model, param_grid, cv=5)
 
 # fit the model with data
-logreg_model.fit(x_train,y_train)
+logreg_cv.fit(x_train,y_train)
 
 # Predict churn in the test set
-logreg_prediction_y = logreg_model.predict(x_test)
+logreg_prediction_y = logreg_cv.predict(x_test)
 
 ```
-
-Model performance
-```{python}
-
-# Accuracy
-churn_accuracy = metrics.accuracy_score(y_test, logreg_prediction_y)
-
-churn_precision = metrics.precision_score(y_test, logreg_prediction_y)
-
-churn_recall = metrics.recall_score(y_test, logreg_prediction_y)
-
-```
-
-The accuracy is: `r py$churn_accuracy`
-
-The precision score (also called the positive predictive value (PPV)) is: `r py$churn_precision`. Its calculated by taking the number of true positives and dividing it with the number of true positives + the number of false positives. In the case of customer churn high precision means that the algorithm rarely predict churn when the customer has in fact stayed.
-
-The recall score (also called sensitivity, hit rate or true positive rate) is: `r py$churn_recall`. Its calculated by taking the number of true positives and dividing it with the number of true positives + the number of false negatives. In the case of customer churn high recall means that the algorithm has predicted most churn correctly.
-
 
 ```{python}
 
@@ -188,7 +186,8 @@ df_report_logreg_prediction[['precision','recall', 'f1-score', 'support']] = df_
 ```{r}
 
 # Convert from pandas to R dataframe
-df_report_logreg_prediction <- py$df_report_logreg_prediction
+df_report_logreg_prediction <- py$df_report_logreg_prediction %>%
+  slice(c(1, 2, 5))
 
 ```
 
@@ -223,41 +222,25 @@ gt(df_report_logreg_prediction) %>%
   cols_label(
     bar = ""
   )
-  
-
-```
-
-ROC curve 
-```{python}
-
-# Compute predicted probabilities: y_pred_prob
-y_pred_prob = logreg_model.predict_proba(x_test)[:,1]
-
-# Generate ROC curve values: fpr, tpr, thresholds
-fpr, tpr, thresholds = roc_curve(y_test, y_pred_prob)
-
-plt.plot([0, 1], [0, 1], 'k--')
-plt.plot(fpr, tpr)
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('ROC Curve')
-plt.show()
-
 
 ```
 
 ## K-nearest neighbors
 
-```{python}
+```{python, include=FALSE}
+
+param_grid = {'n_neighbors': np.arange(1, 10)}
 
 # instantiate the model
-knn_model = KNeighborsClassifier(n_neighbors=5, weights='distance')
+knn_model = KNeighborsClassifier()
+
+knn_cv = GridSearchCV(knn_model, param_grid, cv=5)
 
 # Fit the model to the training data
-knn_model.fit(x_train, y_train)
+knn_cv.fit(x_train, y_train)
 
 # Predict churn in the test set
-knn_prediction_y = knn_model.predict(x_test)
+knn_prediction_y = knn_cv.predict(x_test)
 
 ```
 
@@ -311,7 +294,7 @@ knn_confusion_matrix <- tbl_cross(
               table.width = pct(100),
               column_labels.border.top.color = "white")
 
-logreg_confusion_matrix  
+knn_confusion_matrix  
 
 ```
 
@@ -329,9 +312,16 @@ df_report_knn_prediction[['precision','recall', 'f1-score', 'support']] = df_rep
 ```{r}
 
 # Convert from pandas to R dataframe
-df_report_knn_prediction <- py$df_report_knn_prediction
+df_report_knn_prediction <- py$df_report_knn_prediction %>%
+  slice(c(1, 2, 5))
 
 ```
+
+<br />
+<br />
+<br />
+<br />
+<br />
 
 ```{r}
 
@@ -368,26 +358,28 @@ gt(df_report_knn_prediction) %>%
 
 ```
 
-ROC curve 
-
-
 ## Support vector machines
 
-```{python}
+```{python, include=FALSE}
+
+# Create the hyperparameter grid
+parameters = {'C':[1, 10, 20, 30, 40], 'gamma':[0.01, 0.1, 1]}
 
 # instantiate the model
-svm_model = svm.SVC()
+svm_model = svm.SVC(probability=True)
+
+# Instantiate the GridSearchCV object: svm_cv
+svm_cv = GridSearchCV(svm_model, parameters)
 
 # Fit the model to the training data
-svm_model.fit(x_train, y_train)
+svm_cv.fit(x_train, y_train)
 
 # Predict churn in the test set
-svm_prediction_y = svm_model.predict(x_test)
+svm_prediction_y = svm_cv.predict(x_test)
 
 ```
 
-
-```{python}
+```{python, include=FALSE}
 
 # Create dataframe with actual and predicted values of y
 svm_prediction_y_series = pd.Series(svm_prediction_y, name = 'predicted_y')
@@ -455,9 +447,11 @@ df_report_svm_prediction[['precision','recall', 'f1-score', 'support']] = df_rep
 ```{r}
 
 # Convert from pandas to R dataframe
-df_report_svm_prediction <- py$df_report_svm_prediction
+df_report_svm_prediction <- py$df_report_svm_prediction %>%
+  slice(c(1, 2, 5))
 
 ```
+
 
 ```{r}
 
@@ -494,7 +488,35 @@ gt(df_report_svm_prediction) %>%
 
 ```
 
+## ROC curve 
+
 ROC curve 
+
+```{python}
+
+# Compute predicted probabilities for all models
+y_logreg_prob = logreg_cv.predict_proba(x_test)[:,1]
+y_knn_prob = knn_cv.predict_proba(x_test)[:,1]
+y_svm_prob = svm_cv.predict_proba(x_test)[:,1]
+
+# Generate ROC curve values: fpr, tpr, thresholds for models
+fpr1, tpr1, thresh1 = roc_curve(y_test, y_logreg_prob, pos_label=1)
+fpr2, tpr2, thresh2 = roc_curve(y_test, y_knn_prob, pos_label=1)
+fpr3, tpr3, thresh3 = roc_curve(y_test, y_svm_prob, pos_label=1)
+
+plt.plot(fpr1, tpr1, linestyle='--', label='Logistic Regression')
+plt.plot(fpr2, tpr2, linestyle='--', label='K-Nearest Neighbors')
+plt.plot(fpr3, tpr3, linestyle='--', label='Support Vector Machines')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve for all 3 models')
+plt.legend(loc='best')
+plt.show()
+
+#plt.clf()
+
+```
+
 
 # Literature
 
