@@ -25,6 +25,7 @@ library(tidyverse)
 
 ```{python}
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
@@ -37,7 +38,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn import svm
 from sklearn.model_selection import GridSearchCV
-import numpy as np
+
 
 ```
 
@@ -50,12 +51,12 @@ df_churn = pd.read_csv("../data/telecom-churn.csv")
 # Introduction
 In this section I explore how well different classification algorithms are able to predict customer churn in a data set with customer level information from a telecommunications company. For such a company being able to retain customers is of course important. From an analytics perspective, one way of improving retention is being able to predict which customers are likely to stop using the company's services.
 
-To predict this I include 3 different classification algorithms in the analysis: logistic regression, K-Nearest Neighbors and Support Vector Machines. All 3 are well suited for when the outcome variable is binary, as is the case in this analysis (churn/no churn).  
+To predict this I include 3 different classification algorithms in the analysis: logistic regression, k-nearest neighbors (kNN) and Support Vector Machines. All 3 are well suited for when the outcome variable is binary, as is the case in this analysis (churn/no churn). 
 
 The data set is from Kaggle and can be found here: https://www.kaggle.com/barun2104/telecom-churn. It contains 11 columns including the outcome column, and 3333 rows. Each row contains information about a customer.
 
 # Method
-In this section I describe how I will go about predicting customer churn from the telecom data set. Specifically, I describe the data, the process of supervised machine learning and the algorithms used in this analysis.
+In this section I describe how I will go about predicting customer churn from the telecom data set. Specifically, I describe the data, the process of supervised machine learning, the algorithms used in this analysis, and how the performance of algorithms can be measured.
 
 ## The data set
 The data set contains the following 11 columns:
@@ -63,26 +64,28 @@ The data set contains the following 11 columns:
 :::: {style="display: flex;"}
 
 ::: {}
-- `r colnames(py$df_churn)[1]`
-- `r colnames(py$df_churn)[2]`
-- `r colnames(py$df_churn)[3]`
-- `r colnames(py$df_churn)[4]`
+- `r colnames(py$df_churn)[1]`: has the customer canceled the service or not.
+- `r colnames(py$df_churn)[2]`: number of weeks the customer has had an active account.
+- `r colnames(py$df_churn)[3]`: has the customer recently renewed the service contract or not.
+- `r colnames(py$df_churn)[4]`: does the customer have a data plan or not.
 :::
 
 ::: {}
-- `r colnames(py$df_churn)[5]`
-- `r colnames(py$df_churn)[6]`
-- `r colnames(py$df_churn)[7]`
-- `r colnames(py$df_churn)[8]`
+- `r colnames(py$df_churn)[5]`: gigabytes of monthly data usage.
+- `r colnames(py$df_churn)[6]`: number of calls into customer service.
+- `r colnames(py$df_churn)[7]`: average daytime minutes per day.
+- `r colnames(py$df_churn)[8]`: average number of daytime calls.
 :::
 
 ::: {}
-- `r colnames(py$df_churn)[9]`
-- `r colnames(py$df_churn)[10]`
-- `r colnames(py$df_churn)[11]`
+- `r colnames(py$df_churn)[9]`: average monthly bill.
+- `r colnames(py$df_churn)[10]`: largest overage fee in last 12 months.
+- `r colnames(py$df_churn)[11]`: average number of roaming minutes.
 :::
 
 ::::
+
+The first row `r colnames(py$df_churn)[1]` is the outcome variable of interest. It has the value 1 if the customer canceled the service, 0 if not. 14.5 % of the 3333 customers in the data set have canceled their service. This means that there's class imbalance in the outcome variable. The rest of the variables in the data set are the predictor variables. 
 
 Here’s a look at the first 3 rows and columns of the data set:
 ```{r}
@@ -111,26 +114,37 @@ gt(head(py$df_churn[1:3], 3)) %>%
 ## The process of supervised machine learning 
 The task of predicting a binary outcome such as churn falls under supervised machine learning. In supervised learning the goal is to build a statistical model to predict an outcome based on one or more predictor variables (James et al. 2021:1). When the outcome is categorical (as churn) it is described as classification (as opposed to regression when the outcome variable is quantitative).
 
-In supervised machine learning the starting point is a data set that include both the predictor variables and the outcome variable. A key idea is to then divide the data set into a training set and a test set. The training set is used to fit the statistical model to the data. Afterwards the test set is used to evaluate how good the model is at predicting the outcome variable of interest (Kabacoff 2021:449). This is done by using the predictor variables in the test set and the trained statistical model to predict the class of each observation in the test set. These predictions are then compared to the actual values of the outcome variable in the test set. This evaluation is used to assess how good the model will perform in future situations where we only have access to a set of predictor variables and not the actual outcome variable.
+In supervised machine learning the starting point is a data set that includes both the predictor variables and the outcome variable. A key idea is to then divide the data set into a training set and a test set. The training set is used to fit the statistical model to the data. Afterwards the test set is used to evaluate how good the model is at predicting the outcome variable of interest (Kabacoff 2021:449). This is done by using the predictor variables in the test set and the trained statistical model to predict the class of each observation in the test set. These predictions are then compared to the actual values of the outcome variable in the test set. This evaluation is used to assess how good the model will perform in future situations where we only have access to a set of predictor variables and not the actual outcome variable (Irizarry 2019:503).
 
 ## Classification algorithms used in this analysis
-Choosing an algoritm
 
-K-Nearest Neighbors (KNN)
+### Logistic regression
+Logistic regression is a variant of the general linear model. It's an extension of linear regression that outputs conditional probabilities of the outcome variable given the predictor variable(s) (Irizarry 2019:563). In classificatione these probabilities are used to predict class membership. Unlike linear regression that uses least squares, logistic regression uses the maximum likelihood estimate. But like linear regression, the decision rule is line (Irizarry 2019:567).
+
+### k-nearest neighbors (kNN)
 The basic idea of KNN is to predict the class of a data point by looking at the 'k' closest data points. The predicted class is the class with the highest frequency among the k closest data points.
+
+based on bin smoothing (Irizarry 2019:532).
+
+"First we define the distance between all observations based on the features. Then, for any point (x1,x2) for which we want an estimate of p(x1,x2), we look for the k nearest points to (x1,x2) and then take an average of the 0s and 1s associated with these points. We refer to the set of points used to compute the average as the neighborhood. Due to the connection we described earlier between conditional expectations and conditional probabilities, this gives us a pˆ(x1,x2), just like the bin smoother gave us an estimate of a trend. As with bin smoothers, we can control the flexibility of our estimate, in this case through the k parameter: larger ks result in smoother estimates, while smaller ks result in more flexible and more wiggly estimates" (Irizarry 2019:536).
+
+### Support vector machines
+
+## Resampling and tuning of hyperparameters
+Parameters in machine learning algorithms that need to be specified before fitting a model are called hyperparameters. These are parameters that optimize how well the model fit the data. k in kNN is an example of a hyperparameter. The method for choosing such parameters is inherently explorative: you fit the models separately with different hyperparameter values and choose the one that performs the best. I have done this with each of the 3 models in this analysis, using k-fold cross validation on the training set.
 
 ## Measuring model performance
 There are several metrics for measuring model performance when predicting a categorical outcome. Below I briefly describe the metrics I will use in this analysis to assess the performance of the models I have included:
 
-- **Accuracy**: the fraction of correct predictions (the number of correct predictions divided by the total number of data points). Or in other words how often the classifier makes a correct prediction (Kabacoff 2021:465).
+- **Overall accuracy**: the fraction of cases that were correctly predicted in the test set (Kabacoff 2021:465). Calculated as the number of correct predictions divided by the total number of data points.
 
-- **Precision (or positive predictive value)**: “Probability that an observation with a positive classification is correctly identified as positive” (Kabacoff 2021:465). So if a person is classified as having quit the service how likely is it that this classification will be correct? In other words – in the case of customer churn – high precision means that the algorithm rarely predicts churn when the customer has in fact stayed. Calculated as the number of true positives divided by the number of true positives + the number of false positives.
+- **Sensitivity (or recall or true positive rate)**: The proportion of actual positives that are predicted as positives (Irizarry 2019:508). In this analysis it's the percentage of people who have stopped using the service that are correctly identified as such in the test set. In other words – In the case of customer churn – high sensitivity means that the model has predicted most of the actual churn correctly. Calculated as the number of true positives divided by the number of true positives + the number of false negatives.
 
-- **Sensitivity (or recall or true positive rate)**: “Probability of getting a positive classification when the true outcome is positive” (Kabacoff 2021:465). What percentage of people who have stopped using the service are correctly identified? In other words – In the case of customer churn – high recall means that the algorithm has predicted most churn correctly. Calculated as the number of true positives divided by the number of true positives + the number of false negatives.
+- **Specificity (or true negative rate)**: The proportion of negatives that are predicted as negatives (Irizarry 2019:508). In this analysis it's the percentage of people who are still using the service that are correctly identified as such. Calculated as the number of true negatives divided by the number of true negatives + the number of false positives.
 
-- **Specificity (or true negative rate)**: “Probability of getting a negative classification when the true outcome is negative” (Kabacoff 2021:465). What percentage of people who are still using the service are correctly identified? Calculated as the number of true negatives divided by the number of true negatives + the number of false positives.
+- **Precision (or positive predictive value)**: The proportion of predicted positives that are actual positives (Irizarry 2019:508). So if a person is classified as having stopped using the service how likely is it that this classification will be correct? In other words – in the case of customer churn – high precision means that the algorithm rarely predicts churn when the customer has in fact stayed. Calculated as the number of true positives divided by the number of true positives + the number of false positives.
 
-
+For each of the 3 models I include in this analysis I will present these metrics through confusion matrices and classification reports.
 
 # Analysis
 
@@ -149,7 +163,7 @@ y = df_churn['Churn']
 ```{python}
 # split X and y into training and testing sets
 
-x_train,x_test,y_train,y_test = train_test_split(x, y, test_size = 0.33,random_state = 0, stratify = y)
+x_train,x_test,y_train,y_test = train_test_split(x, y, test_size = 0.25, random_state = 0, stratify = y)
 
 ```
 
@@ -303,7 +317,7 @@ gt(df_report_logreg_prediction) %>%
 
 ```
 
-## K-nearest neighbors
+## kNN
 
 ```{python, include=FALSE}
 
@@ -567,7 +581,9 @@ gt(df_report_svm_prediction) %>%
 
 ## ROC curve 
 
-ROC curve 
+ROC curves provide a way to visually evaluate models.
+
+"The ROC curve plots sensitivity (TPR) versus 1 - specificity or the false positive rate (FPR)" (Irizarry 2019:511).
 
 ```{python}
 
@@ -597,5 +613,5 @@ plt.show()
 ## Concluding remarks
 
 # Literature
-
+Irizarry, Rafael A. (2019): Introduction to Data Science, CRC Press
 
