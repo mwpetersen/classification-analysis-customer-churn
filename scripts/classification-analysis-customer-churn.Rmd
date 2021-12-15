@@ -119,14 +119,12 @@ In supervised machine learning the starting point is a data set that includes bo
 ## Classification algorithms used in this analysis
 
 ### Logistic regression
-Logistic regression is a variant of the general linear model. It's an extension of linear regression that outputs conditional probabilities of the outcome variable given the predictor variable(s) (Irizarry 2019:563). In classificatione these probabilities are used to predict class membership. Unlike linear regression that uses least squares, logistic regression uses the maximum likelihood estimate. But like linear regression, the decision rule is line (Irizarry 2019:567).
+Logistic regression is a variant of the general linear model. It is similar to linear regression in several ways. The right hand side of the equations are the same, and the decision rule produced by both is a line (Irizarry 2019:567). But in logistic regression we don't predict the outcome y, we predict the log odds of y (James et al. 2021:133). Thus the output is conditional probabilities of the outcome variable given the predictor variable(s), expressed in log odds units. In classification these probabilities are used to predict class membership. Another difference between logistic regression and linear regression is that logistic regression uses the maximum likelihood estimate, and not the least squares estimate.
 
 ### k-nearest neighbors (kNN)
-The basic idea of KNN is to predict the class of a data point by looking at the 'k' closest data points. The predicted class is the class with the highest frequency among the k closest data points.
+Like logistic regression, the kNN algorithm also estimates the conditional probabilities of the outcome variable given the predictors, and then uses these probabilities to predict the class membership (James et al. 2021:39). It does so by estimating local probabilities. So in order to predict the class of a data point, the model looks at the 'k' nearest data points. And the class that is the most frequent among the k closest data points become the predicted class. The k nearest points are defined by the distance between them based on the features (Irizarry 2019:536). 
 
-based on bin smoothing (Irizarry 2019:532).
-
-"First we define the distance between all observations based on the features. Then, for any point (x1,x2) for which we want an estimate of p(x1,x2), we look for the k nearest points to (x1,x2) and then take an average of the 0s and 1s associated with these points. We refer to the set of points used to compute the average as the neighborhood. Due to the connection we described earlier between conditional expectations and conditional probabilities, this gives us a pˆ(x1,x2), just like the bin smoother gave us an estimate of a trend. As with bin smoothers, we can control the flexibility of our estimate, in this case through the k parameter: larger ks result in smoother estimates, while smaller ks result in more flexible and more wiggly estimates" (Irizarry 2019:536).
+kNN, as a non-parametric method, provide a much more flexible alternative to for instance logistic regression (James et al. 2021:105). We can control the flexibility with the k hyperparameter. Larger k's result in more inflexible estimates.
 
 ### Support vector machines
 
