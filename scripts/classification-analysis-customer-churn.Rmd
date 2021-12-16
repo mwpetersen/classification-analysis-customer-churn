@@ -437,6 +437,12 @@ knn_recall_score_1 = round(metrics.recall_score(y_test, knn_prediction_y, pos_la
 
 The second model I have used to predict churn is a kNN. We can see the results of the prediction on the test set in the confusion matrix in table \@ref(tab:knn-confusion) below. The computed overall accuracy from the matrix is `r py$knn_accuracy_score`. This is a bit better than the logistic regression model (where the overall accuracy were `r py$logreg_accuracy_score`. Like the regression model, the kNN model is good at predicting "no churn", but struggles with predicting churn. We can, however, see a substantial improvement in the model's ability to predict churn compared to the logistic model. 
 
+```{r knn-confusion}
+
+knn_confusion_matrix
+
+```
+
 ```{python, include=FALSE}
 
 # Classification report where the output is a dictionary
