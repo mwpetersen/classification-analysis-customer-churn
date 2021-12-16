@@ -266,20 +266,20 @@ logreg_confusion_matrix <- tbl_cross(
 
 # Accuracy score
 
-log_reg_accuracy_score = round(metrics.accuracy_score(y_test, logreg_prediction_y), 2)
+logreg_accuracy_score = round(metrics.accuracy_score(y_test, logreg_prediction_y), 2)
 
 # Precision and recall scores for churn = 0
-log_reg_precision_score_0 = round(metrics.precision_score(y_test, logreg_prediction_y, pos_label = 0), 2)
+logreg_precision_score_0 = round(metrics.precision_score(y_test, logreg_prediction_y, pos_label = 0), 2)
 
-log_reg_recall_score_0 = round(metrics.recall_score(y_test, logreg_prediction_y, pos_label = 0), 2)
+logreg_recall_score_0 = round(metrics.recall_score(y_test, logreg_prediction_y, pos_label = 0), 2)
 
 # Precision and recall scores for churn = 1
-log_reg_precision_score_1 = round(metrics.precision_score(y_test, logreg_prediction_y, pos_label = 1), 2)
+logreg_precision_score_1 = round(metrics.precision_score(y_test, logreg_prediction_y, pos_label = 1), 2)
 
-log_reg_recall_score_1 = round(metrics.recall_score(y_test, logreg_prediction_y, pos_label = 1), 2)
+logreg_recall_score_1 = round(metrics.recall_score(y_test, logreg_prediction_y, pos_label = 1), 2)
 ```
 
-The first model I have used to predict churn is a logistic regression model. We can see the results of the prediction on the test set in the confusion matrix in table \@ref(tab:logreg-confusion) below. From the confusion matrix we can compute the overall accuracy, which is `r py$log_reg_accuracy_score`. This is not so bad. A quick glance at the table reveals an imbalance though: it seems that the model is pretty good at predicting "no churn", but not so good at predicting churn (which is the thing that we are most interested in being able to predict).   
+The first model I have used to predict churn is a logistic regression model. We can see the results of the prediction on the test set in the confusion matrix in table \@ref(tab:logreg-confusion) below. From the confusion matrix we can compute the overall accuracy, which is `r py$logreg_accuracy_score`. This is not so bad. A quick glance at the table reveals an imbalance though: it seems that the model is pretty good at predicting "no churn", but not so good at predicting churn (which is the thing that we are most interested in being able to predict).   
 
 ```{r logreg-confusion}
 
@@ -306,7 +306,7 @@ df_report_logreg_prediction <- py$df_report_logreg_prediction %>%
 
 ```
 
-The accompanying classification report with precision, recall and specificity scores is presented in table \@ref(tab:logreg-classification-report). Here we see that the precision and recall scores for 0 (no churn) are good (`r py$log_reg_precision_score_0` and `r py$log_reg_recall_score_0` respectively). The recall score of the negative class (in this case "no churn") in a binary classification is the specificity score. These numbers support the conclusion from the quick glance above. From the table we can see that the precision score for churn = 1 is `r py$log_reg_precision_score_1`. The score tells us the proportion of predicted churn that are actual churn. The recall score is `r py$log_reg_recall_score_1`. The score is the proportion of actual churn that are predicted as churn. This metric may be the most important metric for a telecom company who wants to be able to predict churn. The very low proportion is not good news. 
+The accompanying classification report with precision, recall and specificity scores is presented in table \@ref(tab:logreg-classification-report). Here we see that the precision and recall scores for 0 (no churn) are good (`r py$logreg_precision_score_0` and `r py$logreg_recall_score_0` respectively). The recall score of the negative class (in this case "no churn") in a binary classification is the specificity score. These numbers support the conclusion from the quick glance above. From the table we can see that the precision score for churn = 1 is `r py$logreg_precision_score_1`. The score tells us the proportion of predicted churn that are actual churn. The recall score is `r py$logreg_recall_score_1`. The score is the proportion of actual churn that are predicted as churn. This metric may be the most important metric for a telecom company who wants to be able to predict churn. The very low proportion is not good news. 
 
 ```{r logreg-classification-report}
 
@@ -375,7 +375,6 @@ df_knn_results = pd.concat([y_test_actual, knn_prediction_y_series], axis=1)
 
 ```
 
-
 ```{r}
 
 # Create dataframe with results for the confusion matrix
@@ -404,6 +403,7 @@ knn_confusion_matrix <- tbl_cross(
     update = list(
       label ~ "")
   ) %>%
+  modify_caption("**Confusion matrix of the kNN prediction**") %>%
   as_gt() %>%
   tab_style(
     style = list(
@@ -416,9 +416,26 @@ knn_confusion_matrix <- tbl_cross(
               table.width = pct(100),
               column_labels.border.top.color = "white")
 
-knn_confusion_matrix  
-
 ```
+
+```{python, include=FALSE}
+
+# Accuracy score
+
+knn_accuracy_score = round(metrics.accuracy_score(y_test, knn_prediction_y), 2)
+
+# Precision and recall scores for churn = 0
+knn_precision_score_0 = round(metrics.precision_score(y_test, knn_prediction_y, pos_label = 0), 2)
+
+knn_recall_score_0 = round(metrics.recall_score(y_test, knn_prediction_y, pos_label = 0), 2)
+
+# Precision and recall scores for churn = 1
+knn_precision_score_1 = round(metrics.precision_score(y_test, knn_prediction_y, pos_label = 1), 2)
+
+knn_recall_score_1 = round(metrics.recall_score(y_test, knn_prediction_y, pos_label = 1), 2)
+```
+
+The second model I have used to predict churn is a kNN. We can see the results of the prediction on the test set in the confusion matrix in table \@ref(tab:knn-confusion) below. The computed overall accuracy from the matrix is `r py$knn_accuracy_score`. This is a bit better than the logistic regression model (where the overall accuracy were `r py$logreg_accuracy_score`. Like the regression model, the kNN model is good at predicting "no churn", but struggles with predicting churn. We can, however, see a substantial improvement in the model's ability to predict churn compared to the logistic model. 
 
 ```{python, include=FALSE}
 
@@ -439,16 +456,13 @@ df_report_knn_prediction <- py$df_report_knn_prediction %>%
 
 ```
 
-<br />
-<br />
-<br />
-<br />
-<br />
+The classification report with precision, recall and specificity scores for the kNN model is presented in table \@ref(tab:knn-classification-report). Here we can see that the precision score for churn = 1 is `r py$knn_precision_score_1`. And the recall score is `r py$knn_recall_score_1`. This means that the kNN model is much better than the logistic regression model at predicting churn when the actual value is churn, and the model also makes fewer mistakes when it predicts churn. It's still not very impressive though. The model only predicts about 1/3 of actual churn as churn. 
 
-```{r}
+```{r knn-classification-report}
 
 # Publication ready classification report
-gt(df_report_knn_prediction) %>%
+gt(df_report_knn_prediction,
+  caption = md("**Classification report of the KNN prediction**")) %>%
   tab_options(table.align='left',
               table.width = pct(100),
               column_labels.border.bottom.width= px(3),
