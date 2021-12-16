@@ -33,7 +33,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.linear_model import LogisticRegression
 from sklearn import metrics
 from sklearn.metrics import classification_report
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, roc_auc_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.compose import ColumnTransformer
@@ -52,7 +52,7 @@ df_churn = pd.read_csv("../data/telecom-churn.csv")
 # Introduction
 In this section I explore how well different classification algorithms are able to predict customer churn in a data set with customer level information from a telecommunications company. For such a company being able to retain customers is of course important. From an analytics perspective, one way of improving retention is being able to predict which customers are likely to stop using the company's services.
 
-To predict this I include 3 different classification algorithms in the analysis: logistic regression, k-nearest neighbors (kNN) and Support Vector Machines. All 3 are well suited for when the outcome variable is binary, as is the case in this analysis (churn/no churn). 
+To predict this I include 3 different classification algorithms in the analysis: logistic regression, k-nearest neighbors (kNN) and Support Vector Machines (SVM. All 3 are well suited for when the outcome variable is binary, as is the case in this analysis (churn/no churn). 
 
 The data set is from Kaggle and can be found here: https://www.kaggle.com/barun2104/telecom-churn. It contains 11 columns including the outcome column, and 3333 rows. Each row contains information about a customer.
 
@@ -127,7 +127,7 @@ Logistic regression is a variant of the general linear model. It is similar to l
 Like logistic regression, the kNN algorithm also estimates the conditional probabilities of the outcome variable given the predictors, and then uses these probabilities to predict the class membership (James et al. 2021:39). It does so by estimating local probabilities. So in order to predict the class of a data point, the model looks at the 'k' nearest data points. And the class that is the most frequent among the k closest data points become the predicted class. The k nearest points are defined by the distance between them based on the features (Irizarry 2019:536). kNN, as a non-parametric method, provide a much more flexible alternative to for instance logistic regression (James et al. 2021:105). We can control the flexibility with the k hyperparameter. Larger k's result in more inflexible estimates.
 
 ### Support Vector Machines (SVM)
-SVM's are based on the concept of so-called separating hyperplanes (James et al. 2021:369). The algorithm uses these hyperplanes to determine decision rules. The role of a hyperplane is to maximize the margin between the closest points of two classes, and thus separate the data points of these classes (Kabacoff 2021:460). Data points closest to the hyperplane define the boundary of the margins of the hyperplane. These are called support vectors. The most simple separator is a line (in a 2 dimensional space), but it can also take the form of a N-dimensional hyperplane, depending on the data (Kabacoff 2021:460). When there is a non-linear relationship between data of interest, SVM uses so-called kernels to "tranform the data into higher dimensions" (Kabacoff 2021:460).
+SVM's are based on the concept of so-called separating hyperplanes (James et al. 2021:369). The algorithm uses these hyperplanes to determine decision rules. The role of a hyperplane is to maximize the margin between the closest points of two classes, and thus separate the data points of these classes (Kabacoff 2021:460). Data points closest to the hyperplane define the boundary of the margins of the hyperplane. These are called support vectors. The most simple separator is a line (in a 2 dimensional space), but it can also take the form of a N-dimensional hyperplane, depending on the data (Kabacoff 2021:460). When there is a non-linear relationship between data of interest SVM uses so-called kernels to "tranform the data into higher dimensions" (Kabacoff 2021:460).
 
 ## Resampling and tuning of hyperparameters
 Parameters in machine learning algorithms that need to be specified before fitting a model are called hyperparameters. These are parameters that optimize how well the model fit the data. k in kNN is an example of a hyperparameter. The method for choosing such parameters is inherently explorative: you fit the models separately with different hyperparameter values and choose the one that performs the best. I have done this with each of the 3 models in this analysis, using k-fold cross validation on the training set.
@@ -135,11 +135,11 @@ Parameters in machine learning algorithms that need to be specified before fitti
 ## Measuring model performance
 There are several metrics for measuring model performance when predicting a categorical outcome. Below I briefly describe the metrics I will use in this analysis to assess the performance of the models I have included:
 
-- **Overall accuracy**: the fraction of cases that were correctly predicted in the test set (Kabacoff 2021:465). Calculated as the number of correct predictions divided by the total number of data points.
+- **Overall accuracy**: the fraction of cases that were correctly predicted in the test set (Kabacoff 2021:465). Calculated as the number of correct predictions divided by the total number of predictions.
 
 - **Sensitivity (or recall or true positive rate)**: The proportion of actual positives that are predicted as positives (Irizarry 2019:508). In this analysis it's the percentage of people who have stopped using the service that are correctly identified as such in the test set. In other words – In the case of customer churn – high sensitivity means that the model has predicted most of the actual churn correctly. Calculated as the number of true positives divided by the number of true positives + the number of false negatives.
 
-- **Specificity (or true negative rate)**: The proportion of negatives that are predicted as negatives (Irizarry 2019:508). In this analysis it's the percentage of people who are still using the service that are correctly identified as such. Calculated as the number of true negatives divided by the number of true negatives + the number of false positives.
+- **Specificity (or true negative rate)**: The proportion of actual negatives that are predicted as negatives (Irizarry 2019:508). In this analysis it's the percentage of people who are still using the service that are correctly identified as such. Calculated as the number of true negatives divided by the number of true negatives + the number of false positives.
 
 - **Precision (or positive predictive value)**: The proportion of predicted positives that are actual positives (Irizarry 2019:508). So if a person is classified as having stopped using the service how likely is it that this classification will be correct? In other words – in the case of customer churn – high precision means that the algorithm rarely predicts churn when the customer has in fact stayed. Calculated as the number of true positives divided by the number of true positives + the number of false positives.
 
@@ -433,7 +433,7 @@ knn_precision_score_1 = round(metrics.precision_score(y_test, knn_prediction_y, 
 knn_recall_score_1 = round(metrics.recall_score(y_test, knn_prediction_y, pos_label = 1), 2)
 ```
 
-The second model I have used to predict churn is a kNN model. We can see the results of the prediction on the test set in the confusion matrix in table \@ref(tab:knn-confusion) below. The computed overall accuracy from the matrix is `r py$knn_accuracy_score`. This is a bit better than the logistic regression model (where the overall accuracy were `r py$logreg_accuracy_score`. Like the regression model, the kNN model is good at predicting "no churn", but struggles with predicting churn. We can, however, see a substantial improvement in the model's ability to predict churn compared to the logistic model. 
+The second model I have used to predict churn is a kNN model. We can see the results of the prediction on the test set in the confusion matrix in table \@ref(tab:knn-confusion) below. The computed overall accuracy from the matrix is `r py$knn_accuracy_score`. This is a bit better than the logistic regression model (where the overall accuracy was `r py$logreg_accuracy_score`. Like the regression model, the kNN model is good at predicting "no churn", but struggles with predicting churn. We can, however, see a substantial improvement in the model's ability to predict churn compared to the logistic model. 
 
 ```{r knn-confusion}
 
@@ -498,7 +498,7 @@ gt(df_report_knn_prediction,
 
 ```
 
-## Support vector machines
+## SVM
 
 ```{python, include=FALSE}
 
@@ -656,11 +656,10 @@ gt(df_report_svm_prediction,
 ```
 
 ## ROC curves of the 3 models 
-ROC curves provide an alternative to confusion matrices and classification reports in terms of evaluating the predictive performance of models. The do so by plotting the true positive rat (recall) versus the false positive rate (1 - specificity) (Irizarry 2019:511). In figure \@ref(fig:fig-roc) below the 3 ROC curves for all 3 models in this analysis are plotted.
 
-```{python fig-roc, warning=FALSE, message=FALSE, fig.cap="ROC curves for all 3 models"}
+```{python}
 
-# Compute predicted probabilities for all models
+# Compute predicted probabilities for all models for the ROC curves
 y_logreg_prob = logreg_cv.predict_proba(x_test)[:,1]
 y_knn_prob = knn_cv.predict_proba(x_test)[:,1]
 y_svm_prob = svm_cv.predict_proba(x_test)[:,1]
@@ -669,6 +668,18 @@ y_svm_prob = svm_cv.predict_proba(x_test)[:,1]
 fpr1, tpr1, thresh1 = roc_curve(y_test, y_logreg_prob, pos_label=1)
 fpr2, tpr2, thresh2 = roc_curve(y_test, y_knn_prob, pos_label=1)
 fpr3, tpr3, thresh3 = roc_curve(y_test, y_svm_prob, pos_label=1)
+
+# AUC score for the SVM model
+svm_auc_score = round(roc_auc_score(y_test, y_svm_prob), 2)
+
+```
+
+
+ROC curves provide an alternative to confusion matrices and classification reports in terms of evaluating the predictive performance of models. They do so by plotting the true positive rate (recall) versus the false positive rate (1 - specificity) at different probability thresholds (Irizarry 2019:511). In figure \@ref(fig:fig-roc) below the 3 ROC curves for all 3 models in this analysis are plotted. The ideal is the top-left corner, where the true positive rate is 1 and the false positive rate is 0. Thus the larger the area under the ROC curve, the better the model. This performance metric is called AUC ("Area Under the ROC Curve"). When the model perfectly predicts class membership the area under the ROC curve is 1. In the opposite scenario, where a model mispredicts all the values of the outcome variable, the area under the ROC curve will be 0. 
+
+In the plot below we see — similar to the results presented previously — that the SVM model has the best performance. Its AUC score is `r py$svm_auc_score`. 
+
+```{python fig-roc, warning=FALSE, message=FALSE, fig.cap="ROC curves for all 3 models"}
 
 plt.plot(fpr1, tpr1, linestyle='--', label='Logistic Regression')
 plt.plot(fpr2, tpr2, linestyle='--', label='K-Nearest Neighbors')
@@ -682,8 +693,8 @@ plt.show()
 #plt.clf()
 
 ```
-
 ## Concluding remarks
+In this analysis I have explored how well different classification algorithms are able to predict customer churn in a data set with customer level information from a telecommunications company. The 3 included classification algorithms — logistic regression, k-nearest neighbors and Support Vector Machines — performed quite differently. The algorithm that performed the best was the Support Vector Machines algorithm.  
 
 # Literature
 Irizarry, Rafael A. (2019): Introduction to Data Science, CRC Press
