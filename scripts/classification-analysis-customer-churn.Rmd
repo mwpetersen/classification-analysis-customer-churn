@@ -697,5 +697,10 @@ plt.show()
 In this analysis I have explored how well different classification algorithms are able to predict customer churn in a data set with customer level information from a telecommunications company. The 3 included classification algorithms — logistic regression, k-nearest neighbors and Support Vector Machines — performed quite differently. The algorithm that performed the best was the Support Vector Machines algorithm.  
 
 # Literature
-Irizarry, Rafael A. (2019): Introduction to Data Science, CRC Press
+
+- Irizarry, Rafael A. (2019): Introduction to Data Science, CRC Press
+
+- James, Gareth, et al. An Introduction to Statistical Learning. 2nd ed., Springer, 2021.
+
+- Kabacoff, R. I. (2021). R in Action (3rd ed.). Manning Publications.
 
